@@ -109,7 +109,7 @@ def main(user_args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show dependency tree if '
                                      'report or update tree if command')
-    parser.add_argument('user_args', nargs='*')
+    parser.add_argument('user_args', nargs='+')
 
     args = parser.parse_args()
     main(args.user_args)
