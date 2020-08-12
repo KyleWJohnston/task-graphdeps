@@ -47,7 +47,7 @@ def check_report_type(user_args):
     for arg in user_args:
         command_location += 1
         arg_length = len(arg)
-        if 2 <= arg_length <= max_command_length:
+        if 2 <= arg_length < max_command_length:
             if commands_dict[arg_length].count(arg) == 1:
                 # Command found and unique
                 return command_location
