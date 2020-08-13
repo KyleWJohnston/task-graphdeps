@@ -4,6 +4,7 @@ Shows dependency tree for reports and updates tree for each subsequent
 command run
 """
 
+import sys
 import os
 from pathlib import Path
 import subprocess
@@ -99,12 +100,16 @@ def main(user_args):
     query.append('-DELETED')
     graphdeps.main(query, IMAGE_PATH, True)
 
-    # Check if feh is running (returns 0 if it is, 1 if it is not)
-    feh = subprocess.run(['pidof', 'feh'], capture_output=True, check=False)
-
-    # Open feh if not running
-    if feh.returncode == 1:
-        subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
+    if sys.platform.startswith('linux'):
+        # Check if feh is running (returns 0 if it is, 1 if it is not)
+        feh = subprocess.run(['pidof', 'feh'], capture_output=True, check=False)
+        # Open feh if not running
+        if feh.returncode == 1:
+            subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
+    elif sys.platform.startswith('win'):
+        subprocess.Popen(['start', IMAGE_PATH], shell=True)
+    else:
+        print('OS is not supported for showing image')
 
 
 if __name__ == '__main__':
