@@ -35,7 +35,7 @@ def check_report_type(user_args):
 
     # Create dictionary of all commands where key is length of commands
     max_command_length = len(max(commands_full, key=len))
-    for i in range(2, max_command_length):
+    for i in range(2, max_command_length + 1):
         commands_dict[i] = []
         for command in commands_full:
             commands_dict[i].append(command[0:i])
@@ -47,7 +47,7 @@ def check_report_type(user_args):
     for arg in user_args:
         command_location += 1
         arg_length = len(arg)
-        if 2 <= arg_length <= max_command_length:
+        if 2 <= arg_length < max_command_length:
             if commands_dict[arg_length].count(arg) == 1:
                 # Command found and unique
                 return command_location
@@ -80,6 +80,7 @@ def main(user_args):
         # user_args is command, so use last query
 
         # Load query last used if user_args are a command
+        print('Using last query...')
         with open(FILTERS_PATH, 'r') as f:
             query = [f.read().replace('\n', '')]  # list containing 1 element
             # Split list so each filter is a separate element
