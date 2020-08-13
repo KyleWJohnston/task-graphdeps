@@ -156,7 +156,7 @@ def main(query, output, quiet):
             description_lines = textwrap.wrap(
                 datum['description'], CHARS_PER_LINE)
             for desc_line in description_lines:
-                label += desc_line + "\\n"
+                label += desc_line.replace('"', '\\"') + "\\n"
 
             lines.append(
                 '"{}"[shape=box][BORDER_WIDTH={}][label="{}{}"][fillcolor={}]'
