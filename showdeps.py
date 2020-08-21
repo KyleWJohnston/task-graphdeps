@@ -89,11 +89,9 @@ def main(user_args):
 
         # Run Taswarrior
         tw_command = ['task']
-        for i in range(0, command_location):
+        for user_arg in user_args:
             # Append commands individually
-            tw_command.append(user_args[i])
-        # Append filters as one string
-        tw_command.append(' '.join(user_args[command_location:]))
+            tw_command.append(user_arg)
         subprocess.run(tw_command, check=False)
 
     # Update dependency tree
