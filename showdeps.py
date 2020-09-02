@@ -13,7 +13,7 @@ import graphdeps
 
 CONFIG_DIR = os.path.join(Path.home(), '.cache', 'taskwarrior-showdeps')
 
-IMAGE_PATH = os.path.join(CONFIG_DIR, 'last_deps_image.png')
+IMAGE_PATH = os.path.join(CONFIG_DIR, 'last_deps_image.svg')
 FILTERS_PATH = os.path.join(CONFIG_DIR, 'last_report_query.cfg')
 
 
@@ -55,7 +55,7 @@ def check_report_type(user_args):
     return 0
 
 
-def main(user_args):
+def main(user_args, show):
     """
     Shows dependency tree for reports and updates tree for each subsequent
     command run
@@ -90,7 +90,7 @@ def main(user_args):
         # Run Taswarrior
         tw_command = ['task']
         for user_arg in user_args:
-            # Append commands individually
+            # Append args individually
             tw_command.append(user_arg)
         subprocess.run(tw_command, check=False)
 
@@ -105,7 +105,8 @@ def main(user_args):
         if feh.returncode == 1:
             subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
     elif sys.platform.startswith('win'):
-        subprocess.Popen(['start', IMAGE_PATH], shell=True)
+        if show:
+            subprocess.Popen(['start', IMAGE_PATH], shell=True)
     else:
         print('OS is not supported for showing image')
 
@@ -114,6 +115,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Show dependency tree if '
                                      'report or update tree if command')
     parser.add_argument('user_args', nargs='+')
+    parser.add_argument('-s', '--show', action='store_true', help='Show resulting image')
 
     args = parser.parse_args()
-    main(args.user_args)
+    main(args.user_args, args.show)

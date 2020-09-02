@@ -87,7 +87,7 @@ def get_json(query_parsed):
 
 def call_dot(instr):
     """Call dot, returning stdout and stdout"""
-    dot = Popen('dot -T png'.split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    dot = Popen('dot -T svg'.split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
     return dot.communicate(instr)
 
 
@@ -120,8 +120,9 @@ def main(query, output, quiet):
             color = ''
             style = 'filled'
 
+            id = str(datum['id'])
             if datum['status'] == 'pending':
-                prefix = str(datum['id']) + '\: '
+                prefix = id + '\: '
                 if not datum.get('depends', ''):
                     color = COLOR_UNBLOCKED
                 else:
@@ -137,7 +138,7 @@ def main(query, output, quiet):
                         color = COLOR_UNBLOCKED
 
             elif datum['status'] == 'waiting':
-                prefix = 'WAIT: '
+                prefix = id + ' WAIT: '
                 color = COLOR_WAIT
             elif datum['status'] == 'completed':
                 prefix = 'DONE: '
@@ -146,7 +147,7 @@ def main(query, output, quiet):
                 prefix = 'DELETED: '
                 color = COLOR_DELETED
             else:
-                prefix = ''
+                prefix = id
                 color = 'white'
 
             if float(datum['urgency']) == max_urgency:
@@ -156,7 +157,7 @@ def main(query, output, quiet):
             description_lines = textwrap.wrap(
                 datum['description'], CHARS_PER_LINE)
             for desc_line in description_lines:
-                label += desc_line.replace('"', '\\"') + "\\n"
+                label += desc_line + "\\n"
 
             lines.append(
                 '"{}"[shape=box][BORDER_WIDTH={}][label="{}{}"][fillcolor={}]'
@@ -177,21 +178,21 @@ def main(query, output, quiet):
     lines.append(FOOTER)
 
     quiet_print('Calling dot', quiet)
-    png, err = call_dot('\n'.join(lines).encode('utf-8'))
+    svg, err = call_dot('\n'.join(lines).encode('utf-8'))
     if err not in ('', b''):
         print('Error calling dot:')
         print(err.strip())
 
     quiet_print('Writing to ' + output, quiet)
     with open(output, 'wb') as f:
-        f.write(png)
+        f.write(svg)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create dependency trees')
     parser.add_argument('query', nargs='+',
                         help='Taskwarrior query')
-    parser.add_argument('-o', '--output', default='deps.png',
+    parser.add_argument('-o', '--output', default='deps.svg',
                         help='output filename')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='suppress output messages')
