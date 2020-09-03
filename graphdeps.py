@@ -4,6 +4,7 @@ import argparse
 import json
 from subprocess import Popen, PIPE
 import textwrap
+import os
 
 
 # Typical command line usage:
@@ -85,9 +86,9 @@ def get_json(query_parsed):
     return json.loads(result)
 
 
-def call_dot(instr):
+def call_dot(instr, image_extension):
     """Call dot, returning stdout and stdout"""
-    dot = Popen('dot -T svg'.split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    dot = Popen('dot -T {}'.format(image_extension).split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
     return dot.communicate(instr)
 
 
@@ -178,14 +179,15 @@ def main(query, output, quiet):
     lines.append(FOOTER)
 
     quiet_print('Calling dot', quiet)
-    svg, err = call_dot('\n'.join(lines).encode('utf-8'))
+    img_extension = os.path.splitext(output)[1][1:]  # get extension from (root, ext) then select all after the period
+    img, err = call_dot('\n'.join(lines).encode('utf-8'), img_extension)
     if err not in ('', b''):
         print('Error calling dot:')
         print(err.strip())
 
     quiet_print('Writing to ' + output, quiet)
     with open(output, 'wb') as f:
-        f.write(svg)
+        f.write(img)
 
 
 if __name__ == '__main__':
@@ -193,7 +195,7 @@ if __name__ == '__main__':
     parser.add_argument('query', nargs='+',
                         help='Taskwarrior query')
     parser.add_argument('-o', '--output', default='deps.svg',
-                        help='output filename')
+                        help='output filename, accepts most extension types')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='suppress output messages')
 

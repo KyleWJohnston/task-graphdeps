@@ -13,7 +13,6 @@ import graphdeps
 
 CONFIG_DIR = os.path.join(Path.home(), '.cache', 'taskwarrior-showdeps')
 
-IMAGE_PATH = os.path.join(CONFIG_DIR, 'last_deps_image.svg')
 FILTERS_PATH = os.path.join(CONFIG_DIR, 'last_report_query.cfg')
 
 
@@ -108,6 +107,10 @@ def main(user_args, show, png):
 
     # Update dependency tree
     query.append('-DELETED')
+    if png:
+        IMAGE_PATH = os.path.join(CONFIG_DIR, 'last_deps_image' + '.png')
+    else:
+        IMAGE_PATH = os.path.join(CONFIG_DIR, 'last_deps_image' + '.svg')
     graphdeps.main(query, IMAGE_PATH, True)
 
     if sys.platform.startswith('linux'):
@@ -137,4 +140,4 @@ if __name__ == '__main__':
                         help='Save as a png insteand of svg')
 
     args = parser.parse_args()
-    main(args.user_args, args.show, args,png)
+    main(args.user_args, args.show, args.png)
