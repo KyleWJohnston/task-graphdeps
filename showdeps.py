@@ -24,7 +24,16 @@ def make_config_dir():
 
 
 def check_report_type(user_args):
-    """Return location of first command or 0 if no command found"""
+    """
+    If command given, return location of first command
+    If no user_args, return 0
+    If no command found (assuming report filter), return -1
+    """
+
+    # Re-run last report if no user_args given
+    if user_args == []:
+        print('No arguments given, using last query to update dependency tree...')
+        return 0
 
     # List of commands found at https://taskwarrior.org/docs/commands/
     commands_full = ['add', 'annotate', 'append', 'calc', 'config', 'context',
@@ -51,11 +60,14 @@ def check_report_type(user_args):
         if 2 <= arg_length < max_command_length:
             if commands_dict[arg_length].count(arg) == 1:
                 # Command found and unique
+                print('Command provided, running command and then using last query to update dependency tree...')
                 return command_location
-    return 0
+
+    print('Report filter provided, storing new query to update dependency tree...')
+    return -1
 
 
-def main(user_args, show):
+def main(user_args, show, png):
     """
     Shows dependency tree for reports and updates tree for each subsequent
     command run
@@ -66,7 +78,7 @@ def main(user_args, show):
 
     # Get query for graphdeps
     command_location = check_report_type(user_args)
-    if command_location == 0:
+    if command_location == -1:
         # user_args is report, so generate new query
 
         # Update query if user_args are report
@@ -81,29 +93,32 @@ def main(user_args, show):
         # user_args is command, so use last query
 
         # Load query last used if user_args are a command
-        print('Using last query...')
         with open(FILTERS_PATH, 'r') as f:
             query = [f.read().replace('\n', '')]  # list containing 1 element
             # Split list so each filter is a separate element
             query = query[0].split(' ')
 
         # Run Taswarrior
-        tw_command = ['task']
-        for user_arg in user_args:
-            # Append args individually
-            tw_command.append(user_arg)
-        subprocess.run(tw_command, check=False)
+        if command_location >= 1:
+            tw_command = ['task']
+            for user_arg in user_args:
+                # Append args individually
+                tw_command.append(user_arg)
+            subprocess.run(tw_command, check=False)
 
     # Update dependency tree
     query.append('-DELETED')
     graphdeps.main(query, IMAGE_PATH, True)
 
     if sys.platform.startswith('linux'):
-        # Check if feh is running (returns 0 if it is, 1 if it is not)
-        feh = subprocess.run(['pidof', 'feh'], capture_output=True, check=False)
-        # Open feh if not running
-        if feh.returncode == 1:
-            subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
+        if png:
+            # Check if feh is running (returns 0 if it is, 1 if it is not)
+            feh = subprocess.run(['pidof', 'feh'], capture_output=True, check=False)
+            # Open feh if not running
+            if feh.returncode == 1:
+                subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
+        else:
+            subprocess.Popen(['xdg-open', IMAGE_PATH])
     elif sys.platform.startswith('win'):
         if show:
             subprocess.Popen(['start', IMAGE_PATH], shell=True)
@@ -112,10 +127,14 @@ def main(user_args, show):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show dependency tree if '
-                                     'report or update tree if command')
-    parser.add_argument('user_args', nargs='+')
-    parser.add_argument('-s', '--show', action='store_true', help='Show resulting image')
+    parser = argparse.ArgumentParser(description='Run Taskwarrior commands'
+                                                 'and update dependency tree')
+    parser.add_argument('user_args', nargs='*',
+                        help='Taskwarrior filters or commands')
+    parser.add_argument('-s', '--show', action='store_true',
+                        help='Show resulting image')
+    parser.add_argument('--png', action='store_true',
+                        help='Save as a png insteand of svg')
 
     args = parser.parse_args()
-    main(args.user_args, args.show)
+    main(args.user_args, args.show, args,png)
