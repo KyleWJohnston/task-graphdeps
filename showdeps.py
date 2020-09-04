@@ -86,7 +86,7 @@ def main(user_args, show, png):
             f.write(' '.join(query))
 
         # Run Taskwarrior
-        subprocess.run(['task', ' '.join(user_args)], check=False)
+        subprocess.run(['task'] + ' '.join(user_args).split())
 
     else:
         # user_args is command, so use last query
