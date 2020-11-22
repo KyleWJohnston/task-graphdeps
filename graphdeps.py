@@ -4,7 +4,6 @@ import argparse
 import json
 from subprocess import Popen, PIPE
 import textwrap
-import os
 
 
 # Typical command line usage:
@@ -67,9 +66,9 @@ FOOTER = "}"
 valid_uuids = list()
 
 
-def quiet_print(msg, quiet):
-    """Print only if quiet=False (default)"""
-    if not quiet:
+def verbose_print(msg, verbose):
+    """Print only if verbose=False (default)"""
+    if verbose:
         print(msg)
 
 
@@ -86,23 +85,22 @@ def get_json(query_parsed):
     return json.loads(result)
 
 
-def call_dot(instr, image_extension):
+def call_dot(instr):
     """Call dot, returning stdout and stdout"""
-    dot = Popen('dot -T {}'.format(image_extension).split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    dot = Popen('dot -T png'.split(), stdout=PIPE, stderr=PIPE, stdin=PIPE)
     return dot.communicate(instr)
 
 
-def main(query, output, quiet):
+def main(query, output, verbose):
     """
     Generate dependency trees
 
     :param query: a list where each element is a filter
     :param output: a string containing the filename with extension
-    :param quiet: a boolean (False by default) that will print quiet_print
-                  statements if False
+    :param verbose: a boolean that will print verbose_print statements if True
     """
 
-    quiet_print('Calling TaskWarrior', quiet)
+    verbose_print('Calling TaskWarrior', verbose)
     data = get_json(' '.join(query))
 
     max_urgency = -9999
@@ -112,7 +110,7 @@ def main(query, output, quiet):
 
     # first pass: labels
     lines = [HEADER]
-    quiet_print('Printing labels', quiet)
+    verbose_print('Printing labels', verbose)
     for datum in data:
         valid_uuids.append(datum['uuid'])
         if datum['description']:
@@ -121,9 +119,8 @@ def main(query, output, quiet):
             color = ''
             style = 'filled'
 
-            id = str(datum['id'])
             if datum['status'] == 'pending':
-                prefix = id + '\: '
+                prefix = str(datum['id']) + '\: '
                 if not datum.get('depends', ''):
                     color = COLOR_UNBLOCKED
                 else:
@@ -139,7 +136,7 @@ def main(query, output, quiet):
                         color = COLOR_UNBLOCKED
 
             elif datum['status'] == 'waiting':
-                prefix = id + ' WAIT: '
+                prefix = 'WAIT: '
                 color = COLOR_WAIT
             elif datum['status'] == 'completed':
                 prefix = 'DONE: '
@@ -148,7 +145,7 @@ def main(query, output, quiet):
                 prefix = 'DELETED: '
                 color = COLOR_DELETED
             else:
-                prefix = id
+                prefix = ''
                 color = 'white'
 
             if float(datum['urgency']) == max_urgency:
@@ -168,7 +165,7 @@ def main(query, output, quiet):
             # documentation http://www.graphviz.org/doc/info/attrs.html
 
     # second pass: dependencies
-    quiet_print('Resolving dependencies', quiet)
+    verbose_print('Resolving dependencies', verbose)
     for datum in data:
         if datum['description']:
             for dep in datum.get('depends', '').split(','):
@@ -178,26 +175,12 @@ def main(query, output, quiet):
 
     lines.append(FOOTER)
 
-    quiet_print('Calling dot', quiet)
-    img_extension = os.path.splitext(output)[1][1:]  # get extension from (root, ext) then select all after the period
-    img, err = call_dot('\n'.join(lines).encode('utf-8'), img_extension)
+    verbose_print('Calling dot', verbose)
+    png, err = call_dot('\n'.join(lines).encode('utf-8'))
     if err not in ('', b''):
         print('Error calling dot:')
         print(err.strip())
 
-    quiet_print('Writing to ' + output, quiet)
+    verbose_print('Writing to ' + output, verbose)
     with open(output, 'wb') as f:
-        f.write(img)
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Create dependency trees')
-    parser.add_argument('query', nargs='+',
-                        help='Taskwarrior query')
-    parser.add_argument('-o', '--output', default='deps.svg',
-                        help='output filename, accepts most extension types')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='suppress output messages')
-
-    args = parser.parse_args()
-    main(args.query, args.output, args.quiet)
+        f.write(png)
