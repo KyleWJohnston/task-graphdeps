@@ -58,7 +58,7 @@ def main(user_args, output, task, show, all_projects, verbose, show_deleted):
     Shows dependency tree for reports and updates tree for each subsequent
     command run
     """
-    
+
     # Check if input is valid
     if user_args == None and all_projects == False:
         print('Argument required (unless running all-projects)')
@@ -124,13 +124,13 @@ def main(user_args, output, task, show, all_projects, verbose, show_deleted):
         #    project_graphdeps_query = graphdeps_query
         #    project_graphdeps_query.append('pro:' + project)
         #    graphdeps.main(proect_graphdeps_query, IMAGE_PATH + project, verbose)
-    else:
+    # else:
         graphdeps.main(graphdeps_query, IMAGE_PATH, verbose)
 
     # Show dependency tree or where it was saved
     if show:
-    
-        if platform.system == 'Linux':
+
+        if platform.system() == 'Linux':
             # Check if feh is running (returns 0 if it is, 1 if it is not)
             feh = subprocess.run(['pidof', 'feh'], capture_output=True, check=False)
 
@@ -138,9 +138,9 @@ def main(user_args, output, task, show, all_projects, verbose, show_deleted):
             if feh.returncode == 1:
                 subprocess.Popen(['feh', '--auto-zoom', IMAGE_PATH])
 
-        elif platform.system == 'Windows':
+        elif platform.system() == 'Windows':
             subprocess.Popen(['start', IMAGE_PATH], shell=True)
-        
+
         else:
             print('Your system platform could not be determined to open image')
     else:
